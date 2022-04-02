@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 
 const authRoute = require('./routes/auth');
 const managmentRoute = require('./routes/managment');
+const shopRoute = require('./routes/shop');
 app.use(bodyParser.json());
 
 app.use((req, res, next) => {
@@ -23,6 +24,7 @@ app.use((error, req, res, next) => {
 	res.status(status).json({ message: message });
 });
 app.use('/managment', managmentRoute);
+app.use('/shop', shopRoute);
 
 mongoose.connect(process.env.MONGODB_URI, (result) => {
 	app.listen(process.env.PORT, () => {
