@@ -103,6 +103,7 @@ function sortDateAndValue(arraypayments,typedate,typevalue)
 //@router post
 //@desc   enter full income
 //@view   public
+//jnj
 exports.addIncome = (req, res, next) => {
 	const error = validationResult(req);
 	if (!error.isEmpty()) {
