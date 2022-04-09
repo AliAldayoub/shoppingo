@@ -6,6 +6,7 @@ const isAuth = require('../middleware/isAuth');
 const managmentController = require('../controller/managment');
 
 const { check, validationResult } = require('express-validator');
+const isMangaer = require('../middleware/isMangaer');
 
 //router for Add payment
 router.post(
@@ -42,4 +43,5 @@ router.get('/getallreqpayments', isAuth, managmentController.getreqpayments);
 router.get('/getdatadashboard',isAuth,managmentController.getdatadashboard);
 router.post('/filterpayments',isAuth,managmentController.filterPayments);
 router.post('/filterreqpayments',isAuth,managmentController.filterReqPayments);
+
 module.exports = router;

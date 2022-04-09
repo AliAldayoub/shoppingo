@@ -20,6 +20,14 @@ const yearandmonths={
 	11:0,
     "year":0
 }
+const priority={
+	1:"BANK",
+	2:"AJAR",
+	3:"FOATER",
+	4:"DEANS",
+	5:"DAENS'S SHOP"
+};
+
 function sortDate(arraypayments,typedate)
 {
 	// console.log(arraypayments);
@@ -103,7 +111,6 @@ function sortDateAndValue(arraypayments,typedate,typevalue)
 //@router post
 //@desc   enter full income
 //@view   public
-//jnj
 exports.addIncome = (req, res, next) => {
 	const error = validationResult(req);
 	if (!error.isEmpty()) {
@@ -179,6 +186,7 @@ exports.addPaymentReq = (req, res, next) => {
 	const value = parseInt(req.body.value);
 	const date = req.body.date;
 	const isRepeater = req.body.isRepeater;
+	const type=req.body.type;
 	let year,
 		month,
 		dateNow,
@@ -196,6 +204,7 @@ exports.addPaymentReq = (req, res, next) => {
 		name: name,
 		value: value,
 		date: date,
+		type:type,
 		isRepeater: isRepeater,
 		numOfMonthRepeater: numOfMonthRepeater,
 		everyPaidValueRepeater: everyPaidValueRepeater
@@ -402,41 +411,140 @@ exports.filterReqPayments=async (req,res,next)=>{
 	const payreq=await User.findById(req.userId).populate("paymentsReq");
 	const filterbydate=req.body.filterbydate;
 	const filterbyvalue=req.body.filterbyvalue;
-	if(filterbydate==="high"&&!filterbyvalue){
-		// console.log(payreq.paymentsReq)
+	const filterbypri=req.body.filterbypri;
+	   
+	    if(filterbydate&&!filterbyvalue){
 		sortDate(payreq.paymentsReq,filterbydate);
 		res.json({
 			filterReqPayments:payreq.paymentsReq
 		})
 	}
-	else if(filterbydate==="low"&&!filterbyvalue){
-		sortDate(payreq.paymentsReq,filterbydate);
-		res.json({
-			filterReqPayments:payreq.paymentsReq
-		})
-	}
-	else if(!filterbydate&&!filterbyvalue==="high"){
+	    else if(!filterbydate&&filterbyvalue){
 		sortValue(payreq.paymentsReq,filterbyvalue);
 		res.json({
 			filterReqPayments:payreq.paymentsReq
 		})
 	}
-	else if(!filterbydate&&!filterbyvalue==="low"){
-		sortValue(payreq.paymentsReq,filterbyvalue);
-		res.json({
-			filterReqPayments:payreq.paymentsReq
-		})
+		else if(filterbydate&&filterbyvalue){
+	    	sortDateAndValue(payreq.paymentsReq,filterbydate,filterbyvalue)
+	    	res.json({
+			   filterReqPayments:payreq.paymentsReq
+		    })
 	}
-	else if(filterbydate==="high"&&filterbyvalue==="high"){
-		sortDateAndValue(payreq.paymentsReq,filterbydate,filterbyvalue)
+	   else if(filterbypri&&!filterbyvalue&&!filterbydate){
+		   const all=[];
+		//   console.log(1)
+		if(filterbypri=="high")
+		   {for (u in priority)
+		   {
+			   const first=payreq.paymentsReq.filter(payment=>{
+				//   console.log(payment)
+				   return payment.type===priority[u];
+			   })
+			   
+			  all.push(...first);
+
+		   }
+		   res.json({
+			filterReqPayments:all
+		 })}
+		 else
+		 {for (let i=5;i>0;i--)
+			{
+				const first=payreq.paymentsReq.filter(payment=>{
+				 //   console.log(payment)
+					return payment.type===priority[i];
+				})
+				
+			   all.push(...first);
+ 
+			}
+			res.json({
+			 filterReqPayments:all
+		  })}
+ 
+
+
+	  }
+	  else if(filterbypri&&filterbyvalue&&!filterbydate){
+		const all=[];
+	//    console.log(1)
+	if(filterbypri==="high")
+		{for (u in priority)
+		{
+			const first=payreq.paymentsReq.filter(payment=>{
+			//    console.log(payment)
+				return payment.type===priority[u];
+			})
+			sortValue(first,filterbyvalue);
+			
+		   all.push(...first);
+
+		}
 		res.json({
-			filterReqPayments:payreq.paymentsReq
-		})
-	}	else if(filterbydate==="low"&&filterbyvalue==="low"){
-		sortDateAndValue(payreq.paymentsReq,filterbydate,filterbyvalue)
+		 filterReqPayments:all
+	  })}
+	  else
+	  {
+		for (let i=5;i>0;i--)
+		{
+			const first=payreq.paymentsReq.filter(payment=>{
+			//    console.log(payment)
+				return payment.type===priority[i];
+			})
+			sortValue(first,filterbyvalue);
+			
+		   all.push(...first);
+
+		}
 		res.json({
-			filterReqPayments:payreq.paymentsReq
+		 filterReqPayments:all
+	  })
+	  }
+
+
+   }
+   else if(filterbypri&&filterbyvalue&&filterbydate){
+	const all=[];
+//    console.log(1)
+if(filterbypri==="high"){
+	for (u in priority)
+	{
+		const first=payreq.paymentsReq.filter(payment=>{
+		//    console.log(payment)
+			return payment.type===priority[u];
 		})
+		 sortDateAndValue(first,filterbydate,filterbyvalue);
+		
+	   all.push(...first);
+
 	}
+	res.json({
+	 filterReqPayments:all
+  })}
+  else
+  {
+	
+		for (let i=5;i>0;i--)
+		{
+			const first=payreq.paymentsReq.filter(payment=>{
+			//    console.log(payment)
+				return payment.type===priority[i];
+			})
+			 sortDateAndValue(first,filterbydate,filterbyvalue);
+			
+		   all.push(...first);
+	
+		}
+		res.json({
+		 filterReqPayments:all
+	  })
+  }
+
+
+}
+
+	
 	
 }
+
