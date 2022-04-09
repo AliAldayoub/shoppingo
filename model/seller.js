@@ -2,10 +2,14 @@ const mongoose = require('mongoose');
 
 const Shcema = mongoose.Schema;
 
-const sellerShcema = new Shema({
-	name: {
+const sellerShcema = new Shcema({
+	nameShop: {
 		type: String,
 		require: true
+	},
+	emailShop:{
+      type:String,
+       require:true 
 	},
 	Phone: {
 		type: Number,
@@ -15,12 +19,16 @@ const sellerShcema = new Shema({
 		type: String,
 		require: true
 	},
-	products: [
-		{
-			type: Schema.Types.ObjectId,
-			ref: 'Product'
-		}
-	]
+	infoUser:{
+		type: Shcema.Types.ObjectId,
+		ref: 'User',
+		
+	},
+	code:{
+		type:String,
+		default:0
+	}
+	
 });
 
 module.exports = mongoose.model('Seller', sellerShcema);

@@ -28,8 +28,8 @@ const userShcema = new Shcema({
 		default: 0
 	},
 	status: {
-		type: Boolean,
-		default: false
+		type: Number,
+		default: 0
 	},
 	payments: [
 		{

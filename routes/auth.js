@@ -1,5 +1,6 @@
 const express = require('express');
-
+const isAuth = require('../middleware/isAuth');
+const isMangaer=require("../middleware/isMangaer.js")
 const router = express.Router();
 
 const authController = require('../controller/auth');
@@ -18,4 +19,13 @@ router.post(
 );
 
 router.post('/login', [ check('email', 'please insert valid Email').not().isEmpty().isEmail() ], authController.login);
+router.post('/ubgrade',
+isAuth,
+[
+	check("nameShop","Name is required").not().isEmpty(),
+	check("emailShop","please insert vaild Email").not().isEmpty().isEmail(),
+	check("address","please insert your location").not().isEmpty(),
+	check("phone","please insert your phone").not().isEmpty()
+],authController.upgrade);
+router.post('/admin/:email',isAuth,isMangaer,authController.admin)
 module.exports = router;
