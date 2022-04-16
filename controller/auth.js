@@ -11,16 +11,18 @@ const isAuth = require('../middleware/isAuth');
 const user = require('../model/user');
 exports.admin=async(req,res,next)=>{
 	let flog1=true;
-	var seller=req.params["email"];
-	var seller1=await Seller.find({emailShop:seller});
-	var randomNum;
-	while(flog1){
-	 randomNum=crypto.randomBytes(6).toString("base64");
-	const flog=await Seller.find({code:randomNum});
-	if(flog.length===0)flog1=false;
-}
+	var sellerEmail=req.params["email"];
+	var flag=req.params["flag"];
+	var seller1=await Seller.find({emailShop:sellerEmail});
+	if(!flag)
+	{
+		await Seller.deleteOne({emailShop:sellerEmail});
+		seller1.save();
+
+	}
+	else{
 	 Seller.findById(seller1[0]._id).then(user=>{
-		user.code=randomNum;
+		user.status=1;
 		user.save();
 	 });
 var transporter = nodemailer.createTransport({
@@ -38,7 +40,7 @@ var mailOptions = {
   from: 'rouniaaudi.675@gmail.com',
   to:seller,
   subject: 'Sending Email using Node.js',
-  text: `Your code is ${randomNum}! `
+  text: `you are seller! `
 };
 
 transporter.sendMail(mailOptions, function(error, info){
@@ -50,7 +52,7 @@ transporter.sendMail(mailOptions, function(error, info){
 });
 
 
-}
+}}
 exports.upgrade=async(req,res,next)=>{
 	const error=validationResult(req);
 	if (!error.isEmpty()) {
@@ -58,7 +60,7 @@ exports.upgrade=async(req,res,next)=>{
 		error.statusCode = 422;
 		throw error;
 	}
-	const {nameShop,emailShop,phone,address,infoUser}=req.body;
+	const {nameShop,phone,address,emailShop,infoUser}=req.body;
 	try {
 		Seller.findOne({ emailShop: emailShop })
 			.then((userdb) => {
@@ -66,31 +68,20 @@ exports.upgrade=async(req,res,next)=>{
 					const error = new Error('seller already exists');
 					error.statusCode = 422;
 					throw error;
-				}}).catch(err=>{
-
-				})
-                User.findById(req.userId.user).then(user=>{
-					user.status=true;
-					user.save();
-				}).catch(err=>{
-					res.send(err.message)
-				});
-				const user=await User.findById(req.userId.user);
-			    user.status=true;
-				user.save();
+				}})
+			
 				const seller=new Seller({
 					nameShop:nameShop,
-					emailShop:emailShop,
 					phone:phone,
 					address:address,
 					infoUser:user
 				})
-				seller.save()
+				seller.save();
 				res
 				.status(201)
 				.json({ message: 'user Created!!', seller: seller});
 	
-			} 
+		} 
 			catch(err){
 				error.statusCode = 422;
 				throw error;
@@ -150,12 +141,12 @@ exports.signup = (req, res, next) => {
 	} catch (error) {
 		error.statusCode = 422;
 		throw error;
-	}
+			}
 };
 
 /////////////////////////////////////LOGIN controlller///////////////////////////////////////
 
-exports.login = async (req, res, next) => {
+exports.login =  (req, res, next) => {
 	const error = validationResult(req);
 	console.log(error);
 	if (!error.isEmpty()) {
@@ -166,25 +157,8 @@ exports.login = async (req, res, next) => {
 	var userCode;
 	const email = req.body.email;
 	const password = req.body.password;
-	const code=req.body.code;
-	if(code){
-		const seller=await Seller.find({code:code});
-		console.log(seller[0].emailShop,email)
-		if(!seller)
-		{
-			const error = new Error(" The code is not corect");
-				error.statusCode = 422;
-				throw error;
+	
 
-		}
-		if(seller[0].emailShop!==email){
-			const error = new Error("email with code not accept");
-				error.statusCode = 422;
-				throw error;
-		}
-		userCode=seller[0]._id.toString();
-		
-	}
 	try {
 		User.findOne({ email: email })
 			.then((user) => {
@@ -203,7 +177,8 @@ exports.login = async (req, res, next) => {
 						}
 					
 						const userId = user._id.toString();
-						jwt.sign({userId,userCode}, process.env.JWT_SECRET_KEY, (err, token) => {
+					
+							jwt.sign({userId}, process.env.JWT_SECRET_KEY, (err, token) => {
 							if (err) {
 								const error = new Error(err.message);
 								error.statusCode = 422;
@@ -211,6 +186,7 @@ exports.login = async (req, res, next) => {
 							}
 							res.status(201).json({ message: 'user Login!!', userId: userId, token: token });
 						});
+
 					})
 					.catch((err) => {
 						if (!err.statusCode) {
@@ -229,4 +205,4 @@ exports.login = async (req, res, next) => {
 		error.statusCode = 500;
 		throw error;
 	}
-};
+}

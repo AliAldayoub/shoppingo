@@ -4,6 +4,7 @@ const User = require('../model/user');
 const { validationResult } = require('express-validator');
 const payment = require('../model/payment');
 const { all } = require('../routes/managment');
+const { default: mongoose } = require('mongoose');
 
 const yearandmonths={
 	0:0,
@@ -25,8 +26,15 @@ const priority={
 	2:"AJAR",
 	3:"FOATER",
 	4:"DEANS",
-	5:"DAENS'S SHOP"
+	5:"OTHERS"
 };
+function getMonthDifference(startDate, endDate) {
+	return (
+	  endDate.getMonth() -
+	  startDate.getMonth() +
+	  12 * (endDate.getFullYear() - startDate.getFullYear())
+	);
+  }
 
 function sortDate(arraypayments,typedate)
 {
@@ -187,17 +195,16 @@ exports.addPaymentReq = (req, res, next) => {
 	const date = req.body.date;
 	const isRepeater = req.body.isRepeater;
 	const type=req.body.type;
-	let year,
-		month,
-		dateNow,
+
+		let dateNow,
 		numOfMonthRepeater = 0,
 		everyPaidValueRepeater = 0;
+		paymentuntilnow=0;
+		almotabaki=0;
 	if (isRepeater == true) {
-		year = parseInt(date.split('/')[2]);
-		month = parseInt(date.split('/')[1]);
 		dateNow = new Date();
-		numOfMonthRepeater =
-			12 * (year - parseInt(dateNow.getFullYear())) + Math.abs(month - (parseInt(dateNow.getMonth()) + 1));
+		endDate=new Date(date);
+		numOfMonthRepeater = getMonthDifference(dateNow,endDate);
 		everyPaidValueRepeater = value / numOfMonthRepeater;
 	}
 	const paymentReq = new PaymentReq({
@@ -207,7 +214,10 @@ exports.addPaymentReq = (req, res, next) => {
 		type:type,
 		isRepeater: isRepeater,
 		numOfMonthRepeater: numOfMonthRepeater,
-		everyPaidValueRepeater: everyPaidValueRepeater
+		everyPaidValueRepeater: everyPaidValueRepeater,
+		paymentuntilnow:0,
+		almotabaki:value
+
 	});
 	paymentReq.save();
 	User.findById(req.userId)
@@ -305,6 +315,10 @@ exports.getdatadashboard=async(req,res,next)=>{
 	const categories={
 		food:0,
 		clothes:0,
+		transporation:0,
+		schoolCost:0,
+		healthInsurunce:0,
+		entertainment:0,
 		others:0
 	}
 	yearandmonths["year"]=now.getFullYear();
@@ -438,7 +452,7 @@ exports.filterReqPayments=async (req,res,next)=>{
 		   {for (u in priority)
 		   {
 			   const first=payreq.paymentsReq.filter(payment=>{
-				//   console.log(payment)
+				   console.log(payment.type)
 				   return payment.type===priority[u];
 			   })
 			   
@@ -548,3 +562,157 @@ if(filterbypri==="high"){
 	
 }
 
+exports.addinstallment=async (req,res,next)=>{
+
+	const id=req.params["id"];
+	// console.log(typeof(id))
+	const now =new Date();
+	const paymentReq=await PaymentReq.findById(id);
+	paymentReq.numOfMonthRepeater=getMonthDifference(now,new Date(paymentReq.date));
+	const necessarymessage=[];
+	const {payment}=req.body;
+	if(paymentReq.isRepeater===false)
+	{
+		necessarymessage.push("you are complete all this installment");
+		const id1=mongoose.Types.ObjectId(id);
+		await PaymentReq.deleteOne({_id:id1});
+		res.json({
+			necessarymessage:necessarymessage
+		})
+		
+	}
+	else {paymentReq.paymentuntilnow=+paymentReq.paymentuntilnow+(+payment);
+	paymentReq.almotabaki=(+paymentReq.value)-(+paymentReq.paymentuntilnow);
+	paymentReq.numOfMonthRepeater=paymentReq.numOfMonthRepeater-1;
+	paymentReq.save();
+	if(paymentReq.numOfMonthRepeater===0&&paymentReq.almotabaki>0)
+	{
+		necessarymessage.push("you must pay all payments ,the time has expired");
+		necessarymessage.push("you are pay for this Month");
+		res.json({
+			paymentReq:paymentReq,
+			necessarymessage:necessarymessage
+		})}
+else	if(paymentReq.almotabaki===0)
+	{
+		necessarymessage.push("you are complete all this installment");
+		const id1=mongoose.Types.ObjectId(id);
+		await PaymentReq.deleteOne({_id:id1});
+		res.json({
+			necessarymessage:necessarymessage
+		})
+	}else{
+		necessarymessage.push("you are pay for this Month");
+		res.json({
+			paymentReq:paymentReq,
+			necessarymessage:necessarymessage
+		})}}
+}
+exports.addmonthlyinstallment=async (req,res,next)=>{
+	const id=req.params["id"];
+	const now=new Date();
+	const paymentReq=await PaymentReq.findById(id);
+	paymentReq.numOfMonthRepeater=getMonthDifference(now,new Date(paymentReq.date));
+	// console.log(typeof(id))
+	const necessarymessage=[];
+
+    if(paymentReq.almotabaki>=paymentReq.everyPaidValueRepeater)
+    {paymentReq.paymentuntilnow=+paymentReq.paymentuntilnow+(+paymentReq.everyPaidValueRepeater);
+	paymentReq.almotabaki=(+paymentReq.value)-(+paymentReq.paymentuntilnow);
+	paymentReq.numOfMonthRepeater=paymentReq.numOfMonthRepeater-1;
+	paymentReq.save();}
+	else if(+paymentReq.almotabaki<(+paymentReq.everyPaidValueRepeater))
+	{
+	paymentReq.paymentuntilnow=+paymentReq.paymentuntilnow+(+paymentReq.almotabaki);
+	paymentReq.almotabaki=(+paymentReq.value)-(+paymentReq.paymentuntilnow);
+	paymentReq.numOfMonthRepeater=paymentReq.numOfMonthRepeater-1;
+	paymentReq.save();
+	}
+	if(paymentReq.numOfMonthRepeater===0&&paymentReq.almotabaki>0)
+	{
+		necessarymessage.push("you must pay all payments ,the time has expired");
+		necessarymessage.push("you are pay for this Month");
+		res.json({
+			paymentReq:paymentReq,
+			necessarymessage:necessarymessage
+		})}
+	else if(paymentReq.almotabaki===0)
+	{
+		necessarymessage.push("you are complete all this installment");
+		const id1=mongoose.Types.ObjectId(id);
+		await PaymentReq.deleteOne({_id:id1});
+		res.json({
+			necessarymessage:necessarymessage
+		})
+	}else{
+		necessarymessage.push("you are pay for this Month");
+		res.json({
+			paymentReq:paymentReq,
+			necessarymessage:necessarymessage
+		})}
+}
+
+exports.deleteinstallment=async (req,res,next)=>{
+	const id=req.params["id"];
+	const id1=mongoose.Types.ObjectId(id);
+	const user=await User.findById(req.userId);
+    const payments=user.paymentsReq.filter(pay=>{
+		  
+		if(pay!=id)
+		return true;
+	})
+	user.paymentsReq=payments;
+	user.save();
+	await PaymentReq.deleteOne({_id:id1});
+	const paymentReq=await PaymentReq.find();
+	res.json({
+		paymentReq:paymentReq
+
+	})
+}
+exports.updateinstallment=async (req,res,next)=>{
+	
+	
+	const {id,name,value,date,isRepeater}=req.body;
+	const paymentReq=await PaymentReq.findById(id);
+	const monthly=paymentReq.paymentuntilnow;
+	const all=paymentReq.almotabaki;
+	if(name)paymentReq.name=name;
+	if(value)
+	{
+		
+		paymentReq.value=value;
+		paymentReq.numOfMonthRepeater=getMonthDifference(new Date(),new Date(paymentReq.date));
+		paymentReq.everyPaidValueRepeater=paymentReq.value/paymentReq.numOfMonthRepeater;
+		paymentReq.almotabaki=paymentReq.value-paymentReq.paymentuntilnow;
+	}
+	if(date)
+	{
+		paymentReq.date=date;
+		paymentReq.numOfMonthRepeater=getMonthDifference(new Date(),new Date(paymentReq.date));
+		paymentReq.everyPaidValueRepeater=paymentReq.value/paymentReq.numOfMonthRepeater;
+	}
+	if(isRepeater)
+	{
+	  paymentReq.isRepeater=isRepeater;
+      paymentReq.numOfMonthRepeater=getMonthDifference(new Date(),new Date(paymentReq.date));
+	  paymentReq.everyPaidValueRepeater=paymentReq.value/paymentReq.numOfMonthRepeater;
+	  paymentReq.paymentuntilnow=0;
+	  paymentReq.almotabaki=paymentReq.value;
+
+	}
+	paymentReq.save();
+	res.json({
+		message:"DONE",
+		paymentReq:paymentReq
+	})
+	
+}
+exports.updatePayReq=async (req,res,next)=>{
+	const id=req.params["id"];
+	const paymentReq=await PaymentReq.findById(id);
+	res.json({
+		paymentReq:paymentReq,
+		editing:true
+	})
+}

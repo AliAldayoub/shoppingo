@@ -13,11 +13,6 @@ module.exports = async (req, res, next) => {
 		const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 		req.userId=decoded.userId
 		const user=await User.findById(req.userId);
-		if(user.status===1)
-		{
-			const seller=await Seller.find({infoUser:user._id});
-			req.userCode=decoded.userCode;
-		}
 		
 		next();
 	} catch (error) {
