@@ -15,6 +15,10 @@ const paymentReqShcema = new Shcema({
 		type: Number,
 		default: 0
 	},
+	type:{
+		type:String,
+		required:true
+	},
 	paided: {
 		type: Number,
 		default: 0
@@ -34,7 +38,14 @@ const paymentReqShcema = new Shcema({
 	everyPaidValueRepeater: {
 		type: Number,
 		default: 0,
-		
+	},
+	paymentuntilnow:{
+		type:Number,
+		default:0
+	},
+	almotabaki:{
+		type:Number,
+		default:0
 	}
 });
 module.exports = mongoose.model('PaymentReq', paymentReqShcema);

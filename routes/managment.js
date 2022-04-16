@@ -6,7 +6,7 @@ const isAuth = require('../middleware/isAuth');
 const managmentController = require('../controller/managment');
 
 const { check, validationResult } = require('express-validator');
-const isMangaer = require('../middleware/isMangaer');
+const isMangaer = require('../middleware/isAdmin');
 
 //router for Add payment
 router.post(
@@ -43,5 +43,9 @@ router.get('/getallreqpayments', isAuth, managmentController.getreqpayments);
 router.get('/getdatadashboard',isAuth,managmentController.getdatadashboard);
 router.post('/filterpayments',isAuth,managmentController.filterPayments);
 router.post('/filterreqpayments',isAuth,managmentController.filterReqPayments);
-
+router.post('/addInstallment/:id',isAuth,managmentController.addinstallment);
+router.post('/deleteInstallment/:id',isAuth,managmentController.deleteinstallment);
+router.post('/updateInstallment/:id',isAuth,managmentController.updateinstallment);
+router.post("/monthlyinstallment/:id",isAuth,managmentController.addmonthlyinstallment);
+router.get("/updatepayreq/:id",isAuth,managmentController.updatePayReq);
 module.exports = router;

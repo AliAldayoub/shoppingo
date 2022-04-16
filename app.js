@@ -6,9 +6,9 @@ const bodyParser = require('body-parser');
 
 const authRoute = require('./routes/auth');
 const managmentRoute = require('./routes/managment');
-
+const clothesRouter=require('./routes/clothes.js');
 app.use(bodyParser.json());
-
+app.use("/uploads",express.static("uploads"))
 app.use((req, res, next) => {
 	res.setHeader('Access-Control-Allow-Origin', '*');
 	res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE');
@@ -24,6 +24,7 @@ app.use((error, req, res, next) => {
 	res.status(status).json({ message: message });
 });
 app.use('/managment', managmentRoute);
+app.use('/clothes',clothesRouter);
 
 
 mongoose.connect(process.env.MONGODB_URI, (result) => {
