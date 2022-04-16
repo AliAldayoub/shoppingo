@@ -6,15 +6,19 @@ const bodyParser = require('body-parser');
 
 const authRoute = require('./routes/auth');
 const managmentRoute = require('./routes/managment');
-const clothesRouter=require('./routes/clothes.js');
+const shopRoute = require('./routes/shop');
+
 app.use(bodyParser.json());
-app.use("/uploads",express.static("uploads"))
+
+app.use('/uploads', express.static('uploads'));
+
 app.use((req, res, next) => {
 	res.setHeader('Access-Control-Allow-Origin', '*');
 	res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE');
 	res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 	next();
 });
+
 app.use('/auth', authRoute);
 
 app.use((error, req, res, next) => {
@@ -23,9 +27,9 @@ app.use((error, req, res, next) => {
 	const message = error.message;
 	res.status(status).json({ message: message });
 });
-app.use('/managment', managmentRoute);
-app.use('/clothes',clothesRouter);
 
+app.use('/managment', managmentRoute);
+app.use('/shop', shopRoute);
 
 mongoose.connect(process.env.MONGODB_URI, (result) => {
 	app.listen(process.env.PORT, () => {
