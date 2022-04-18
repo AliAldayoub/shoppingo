@@ -26,8 +26,8 @@ const upload = multer({
 	fileFilter: fileFilter
 });
 ///////end process image////////////////
-const clothesController = require('../controller/shop');
+const shopController = require('../controller/shop');
 const { check, validationResult } = require('express-validator');
-router.post('/addProduct', upload.single('productImage'), isAuth, isSeller, clothesController.addProduct);
+router.post('/addProduct', upload.single('productImage'), isAuth, isSeller, shopController.addProduct);
 
 module.exports = router;
